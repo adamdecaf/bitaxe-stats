@@ -27,7 +27,7 @@
 	"stratumPort":	21496,
 	"fallbackStratumPort":	3333,
 	"stratumUser":	"address.bitaxe_0123",
-	"fallbacSktratumUser":	"address.bitaxe_0123",
+	"fallbackStratumUser":	"address.bitaxe_0123",
 	"version":	"v2.4.0",
 	"boardVersion":	"601",
 	"runningPartition":	"factory",
