@@ -3,6 +3,7 @@ package blockchain
 import (
 	"errors"
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 )
@@ -13,7 +14,24 @@ type Difficulty struct {
 }
 
 func (d Difficulty) String() string {
-	return fmt.Sprintf("%.2f%s", d.RawValue, d.Unit)
+	if d.Unit == "" {
+		return fmt.Sprintf("%.0f", d.RawValue)
+	}
+
+	value := d.RawValue
+	divisor := 1.0
+	for i := 1; ; i++ {
+		power := math.Pow(10, float64(3*i)) // Calculate powers of 1000 (10^3, 10^6, etc.)
+		if value < power {
+			break
+		}
+		divisor = power
+	}
+
+	// Format without trailing zeros
+	num := strconv.FormatFloat(value/divisor, 'f', -1, 64)
+
+	return fmt.Sprintf("%s%s", num, d.Unit)
 }
 
 func ParseDifficulty(raw string) (Difficulty, error) {

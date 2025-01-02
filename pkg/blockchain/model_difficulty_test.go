@@ -1,6 +1,7 @@
 package blockchain
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -59,6 +60,9 @@ func TestParseDifficulty(t *testing.T) {
 			diff, err := ParseDifficulty(tc.input)
 			require.NoError(t, err)
 			require.Equal(t, tc.expected, diff)
+
+			cleanInput := strings.ToUpper(strings.ReplaceAll(tc.input, " ", ""))
+			require.Equal(t, cleanInput, diff.String())
 		})
 	}
 }
