@@ -23,7 +23,7 @@ func main() {
 	}
 
 	var reportConf report.Config
-	reporter, err := report.NewReporter(reportConf)
+	reporter, err := report.NewReporters(reportConf)
 	if err != nil {
 		panic(err)
 	}
