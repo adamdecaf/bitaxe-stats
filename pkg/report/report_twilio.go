@@ -2,27 +2,47 @@ package report
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"log"
 	"sync"
 
 	"github.com/adamdecaf/bitaxe-stats/pkg/bitaxe"
 	"github.com/adamdecaf/bitaxe-stats/pkg/blockchain"
+
+	"github.com/twilio/twilio-go"
+	twilioApi "github.com/twilio/twilio-go/rest/api/v2010"
 )
 
-// TODO(adam): send a text when a new highest difficulty is found
-
 func newTwilioReporter(conf TwilioConfig) (*twilioReporter, error) {
-	return &twilioReporter{}, nil // TODO(adam):
+	if conf.AccountSid == "" || conf.AuthToken == "" {
+		return nil, errors.New("missing AccountSid / AuthToken")
+	}
+
+	client := twilio.NewRestClientWithParams(twilio.ClientParams{
+		Username: conf.AccountSid,
+		Password: conf.AuthToken,
+	})
+
+	return &twilioReporter{
+		conf:   conf,
+		client: client,
+	}, nil
 }
 
 type twilioReporter struct {
-	// client // TODO(adam): twilio client
+	conf   TwilioConfig
+	client *twilio.RestClient
 
 	mu                sync.RWMutex
 	highestDifficulty blockchain.Difficulty
 }
 
 func (r *twilioReporter) SystemInfo(ctx context.Context, data []bitaxe.SystemInfo) error {
+	var found *bitaxe.SystemInfo
+
+	// Have we observed before?
+	previouslyEmpty := r.previouslyEmpty()
 
 	for _, info := range data {
 		newdiff, err := r.isHighestDifficulty(info)
@@ -30,11 +50,35 @@ func (r *twilioReporter) SystemInfo(ctx context.Context, data []bitaxe.SystemInf
 			return fmt.Errorf("%s system info: %w", info.Hostname, err)
 		}
 		if newdiff != nil {
-			// TODO(adam): send SMS
+			found = &info
 		}
 	}
 
-	return nil // TODO(adam):
+	// only alert on the highest of the best difficulties
+	if !previouslyEmpty && found != nil {
+		err := r.sendSMS(ctx, *found)
+		if err != nil {
+			return fmt.Errorf("alerting on %s newdiff from %s failed: %w", found.BestDiff, found.Hostname, err)
+		}
+	}
+
+	r.logBestDifficulty()
+
+	return nil
+}
+
+func (r *twilioReporter) previouslyEmpty() bool {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	return r.highestDifficulty.RawValue <= 1.0
+}
+
+func (r *twilioReporter) logBestDifficulty() {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	log.Printf("highest difficulty found: %v", r.highestDifficulty.String())
 }
 
 func (r *twilioReporter) isHighestDifficulty(info bitaxe.SystemInfo) (*blockchain.Difficulty, error) {
@@ -59,4 +103,17 @@ func (r *twilioReporter) isHighestDifficulty(info bitaxe.SystemInfo) (*blockchai
 	r.mu.RUnlock()
 
 	return nil, nil
+}
+
+func (r *twilioReporter) sendSMS(ctx context.Context, info bitaxe.SystemInfo) error {
+	params := &twilioApi.CreateMessageParams{}
+	params.SetTo(r.conf.To)
+	params.SetFrom(r.conf.From)
+	params.SetBody(fmt.Sprintf("%s reached a new difficulty of %s", info.Hostname, info.BestDiff))
+
+	_, err := r.client.Api.CreateMessage(params)
+	if err != nil {
+		return fmt.Errorf("sending SMS: %w", err)
+	}
+	return nil
 }
