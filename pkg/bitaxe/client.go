@@ -10,33 +10,31 @@ import (
 )
 
 type Client interface {
-	SystemInfo(ctx context.Context) (SystemInfo, error)
+	SystemInfo(ctx context.Context, baseAddress string) (SystemInfo, error)
 }
 
-func NewClient(baseAddress string, httpClient *http.Client) Client {
+func NewClient(httpClient *http.Client) Client {
 	httpClient = cmp.Or(httpClient, &http.Client{
 		Timeout: 5 * time.Second,
 	})
 
 	return &client{
-		baseAddress: baseAddress,
-		httpClient:  httpClient,
+		httpClient: httpClient,
 	}
 }
 
 type client struct {
-	baseAddress string
-	httpClient  *http.Client
+	httpClient *http.Client
 }
 
 // The ESP-miner code has more details for each endpoint
 //
 // https://github.com/skot/ESP-Miner/blob/master/main/http_server/http_server.c
 
-func (c *client) SystemInfo(ctx context.Context) (SystemInfo, error) {
+func (c *client) SystemInfo(ctx context.Context, baseAddress string) (SystemInfo, error) {
 	var info SystemInfo
 
-	resp, err := c.httpClient.Get(c.baseAddress + "/api/system/info")
+	resp, err := c.httpClient.Get(baseAddress + "/api/system/info")
 	if err != nil {
 		return info, fmt.Errorf("get system info: %w", err)
 	}

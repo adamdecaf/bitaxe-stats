@@ -25,7 +25,7 @@ func (c *collector) SystemInfo(ctx context.Context, targets []string) ([]bitaxe.
 	var data []bitaxe.SystemInfo
 
 	for _, target := range targets {
-		info, err := c.client.SystemInfo(ctx)
+		info, err := c.client.SystemInfo(ctx, target)
 		if err != nil {
 			return nil, fmt.Errorf("fetching system info from %s failed: %w", target, err)
 		}
