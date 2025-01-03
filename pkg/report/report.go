@@ -20,7 +20,7 @@ func NewReporters(conf Config) (Reporter, error) {
 		if err != nil {
 			return nil, fmt.Errorf("honeycomb: %w", err)
 		}
-		if r == nil {
+		if r != nil {
 			reporters = append(reporters, r)
 		}
 
@@ -29,13 +29,13 @@ func NewReporters(conf Config) (Reporter, error) {
 		if err != nil {
 			return nil, fmt.Errorf("twilio: %w", err)
 		}
-		if r == nil {
+		if r != nil {
 			reporters = append(reporters, r)
 		}
 	}
 
 	if len(reporters) == 0 {
-		return nil, fmt.Errorf("no report Config found")
+		return nil, fmt.Errorf("no reporters setup")
 	}
 
 	return &MultiReporter{
