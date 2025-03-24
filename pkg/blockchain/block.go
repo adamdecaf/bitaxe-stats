@@ -6,6 +6,17 @@ import (
 	"math/big"
 )
 
+func HashDifficulty(hash string) (Difficulty, error) {
+	diff, err := CalculateDifficulty(hash)
+	if err != nil {
+		return Difficulty{}, err
+	}
+
+	v, _ := diff.Float64()
+
+	return Difficulty{RawValue: v}, nil
+}
+
 // CalculateDifficulty calculates the difficulty of a block based on its hash
 func CalculateDifficulty(blockHash string) (*big.Float, error) {
 	hashBytes, err := hex.DecodeString(blockHash)
