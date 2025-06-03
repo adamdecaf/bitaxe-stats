@@ -34,8 +34,8 @@
 	"flipscreen":	1,
 	"overheat_mode":	0,
 	"invertscreen":	0,
-	"invertfanpolarity":	1,
 	"autofanspeed":	1,
 	"fanspeed":	52,
-	"fanrpm":	5362
+	"fanrpm":	5362,
+	"temptarget":	60
 }

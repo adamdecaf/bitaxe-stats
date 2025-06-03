@@ -1,10 +1,12 @@
 package bitaxe
 
 import (
+	"bytes"
 	"cmp"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"time"
 )
@@ -43,7 +45,10 @@ func (c *client) SystemInfo(ctx context.Context, baseAddress string) (SystemInfo
 		defer resp.Body.Close()
 	}
 
-	err = json.NewDecoder(resp.Body).Decode(&info)
+	bs, _ := io.ReadAll(resp.Body)
+	fmt.Println(string(bs))
+
+	err = json.NewDecoder(bytes.NewReader(bs)).Decode(&info)
 	if err != nil {
 		return info, fmt.Errorf("reading system info json: %w", err)
 	}
