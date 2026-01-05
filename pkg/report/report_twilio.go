@@ -58,7 +58,7 @@ func (r *twilioReporter) SystemInfo(ctx context.Context, data []bitaxe.SystemInf
 	if !previouslyEmpty && found != nil {
 		err := r.sendSMS(ctx, *found)
 		if err != nil {
-			return fmt.Errorf("alerting on %s newdiff from %s failed: %w", found.BestDiff, found.Hostname, err)
+			return fmt.Errorf("alerting on %.2f newdiff from %s failed: %w", found.BestDiff, found.Hostname, err)
 		}
 	}
 
@@ -82,7 +82,7 @@ func (r *twilioReporter) logBestDifficulty() {
 }
 
 func (r *twilioReporter) isHighestDifficulty(info bitaxe.SystemInfo) (*blockchain.Difficulty, error) {
-	diff, err := blockchain.ParseDifficulty(info.BestDiff)
+	diff, err := blockchain.ParseDifficulty(fmt.Sprintf("%.2f", info.BestDiff))
 	if err != nil {
 		return nil, fmt.Errorf("parsing difficulty: %w", err)
 	}
@@ -109,7 +109,7 @@ func (r *twilioReporter) sendSMS(ctx context.Context, info bitaxe.SystemInfo) er
 	params := &twilioApi.CreateMessageParams{}
 	params.SetTo(r.conf.To)
 	params.SetFrom(r.conf.From)
-	params.SetBody(fmt.Sprintf("%s reached a new difficulty of %s", info.Hostname, info.BestDiff))
+	params.SetBody(fmt.Sprintf("%s reached a new difficulty of %.2f", info.Hostname, info.BestDiff))
 
 	_, err := r.client.Api.CreateMessage(params)
 	if err != nil {
